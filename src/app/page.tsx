@@ -7,12 +7,12 @@ export default function Home() {
   const [clientType, setClientType] = useState<String>("queuer")//queuer,team_associate,head_queuer
 
   useEffect(() => {
-    const notificationSource = new EventSource(`${process.env.NEXT_PUBLIC_api_base}/notifications`);
-    notificationSource.addEventListener("queuer_assigned", (event) => {
-      const { assignedQueuerId, teamNumber, previousQueuerId, matchOrder } = JSON.parse(event.data) as { matchOrder: number, teamNumber: string, assignedQueuerId?: number, previousQueuerId?: number }
+    const notificationSource = new EventSource(`${process.env.NEXT_PUBLIC_api_base}/notifications/serverSentEvents`);
+    notificationSource.addEventListener("message", (event) => {
+      const { assignedQueuerId, teamNumber, previousQueuerId, matchOrder } = JSON.parse(event.data)
       const clientQueuerId = 1
       const isClientEvent = assignedQueuerId == clientQueuerId || previousQueuerId == clientQueuerId
-      const isUnassignment = assignedQueuerId == null || assignedQueuerId == null
+      const isUnassignment = (!isClientEvent && assignedQueuerId == null) || (isClientEvent && previousQueuerId == clientQueuerId)
       let message_part_1 = ''
       let message_part_2 = ''
       if (isClientEvent) {
@@ -28,7 +28,40 @@ export default function Home() {
       setEvents([...events, `${message_part_1} ${message_part_2}`])
     })
     return () => notificationSource.close()
-  })
+  }, [events])
+
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js")
+    }
+
+    (async () => {
+      if (Notification.permission !== 'granted') {
+        await Notification.requestPermission()
+      }
+      if (Notification.permission === 'granted') {
+        const registration = await navigator.serviceWorker.getRegistration()
+        const pushManager = registration?.pushManager
+        let subscription = await pushManager?.getSubscription()
+        if (subscription === null || subscription === undefined) {
+          subscription = await pushManager?.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: process.env.NEXT_PUBLIC_web_push_public_key
+          })
+        }
+        //this will send redundant requests to the server, but will guarantee subscriptions are recorded on server
+        if (subscription !== null && subscription !== undefined) {
+          await fetch(`${process.env.NEXT_PUBLIC_api_base}/notifications/webPush/subscribe`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(subscription)
+          })
+        }
+      }
+    })()
+  }, [])
 
   return (
     <div>
