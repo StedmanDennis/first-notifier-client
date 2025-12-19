@@ -90,8 +90,6 @@ export default function TeamFloorPlan({
                 if (onPositionChange) {
                     onPositionChange(d.teamNumber, newX, newY);
                 }
-
-                console.log("dragged", d.teamNumber, newX, newY);
             });
 
         // Apply drag behavior to React-rendered team markers
