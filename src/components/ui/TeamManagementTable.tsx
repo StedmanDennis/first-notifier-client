@@ -1,15 +1,41 @@
 import { getAllTeamsOptions, removeTeamOptions, updateTeamOptions } from "@/lib/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { useState, useEffect } from "react";
 import ResourceTableActionColumn from "./ResourceTableActionColumn";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import UpdateTeamDialog from "./UpdateTeamDialog";
 import { Button } from "./button";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader } from "./dialog";
+import TeamFloorPlan from "./TeamFloorPlan";
 
 export default function TeamManagementTable() {
     const { data: teams } = useQuery(getAllTeamsOptions())
-    const updateTeamMutation = useMutation(updateTeamOptions())
     const removeTeamMutation = useMutation(removeTeamOptions())
+
+    // Position state management (moved from page.tsx)
+    const [positions, setPositions] = useState<TeamPosition[]>([])
+
+    useEffect(() => {
+        if (teams && positions.length === 0) {
+            const initialPositions = teams.map((team, index) => ({
+                teamNumber: team.teamNumber,
+                x: 20 + (index % 7) * 60,
+                y: 20 + Math.floor(index / 7) * 60
+            }))
+            setPositions(initialPositions)
+        }
+    }, [teams, positions.length])
+
+    const handlePositionChange = (teamNumber: string, x: number, y: number) => {
+        setPositions(prev => {
+            const existing = prev.find(p => p.teamNumber === teamNumber)
+            if (existing) {
+                return prev.map(p => p.teamNumber === teamNumber ? { ...p, x, y } : p)
+            }
+            return [...prev, { teamNumber, x, y }]
+        })
+    }
 
     const columnHelper = createColumnHelper<Team>()
 
@@ -43,10 +69,6 @@ export default function TeamManagementTable() {
         ]
     })
 
-    const openEdit = () => {
-
-    }
-
     const headers = table.getLeafHeaders().map((header) => (
         <TableHead key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
     ))
@@ -65,15 +87,44 @@ export default function TeamManagementTable() {
         </TableRow>)
 
     return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    {headers}
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {body}
-            </TableBody>
-        </Table>
+        <div className="space-y-4">
+            <div className="flex justify-end">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button>Floor Plan</Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-[900px]">
+                        <DialogHeader>
+                            <DialogTitle>Team Floor Plan</DialogTitle>
+                        </DialogHeader>
+                        <div className="flex justify-center py-4">
+                            {teams ? (
+                                <TeamFloorPlan
+                                    teams={teams}
+                                    positions={positions}
+                                    onPositionChange={handlePositionChange}
+                                    width={400}
+                                    height={400}
+                                    gridSize={20}
+                                />
+                            ) : (
+                                <div>Loading...</div>
+                            )}
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        {headers}
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {body}
+                </TableBody>
+            </Table>
+        </div>
     )
 }
