@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function AppSidebar() {
   return (
-    <Sidebar>
+    <Sidebar variant="inset">
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem><SidebarMenuButton asChild><Link href="/manage/queuers">Queuers</Link></SidebarMenuButton></SidebarMenuItem>
