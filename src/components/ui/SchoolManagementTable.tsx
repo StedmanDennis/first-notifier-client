@@ -1,8 +1,9 @@
-import { getAllSchoolsOptions, getAllTeamsOptions, removeTeamOptions, updateTeamOptions } from "@/lib/api";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { getAllSchoolsOptions } from "@/lib/api/first_notifier/react_query_options";
+import { useQuery } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import ResourceTableActionColumn from "./ResourceTableActionColumn";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
+import { School } from "@/lib/api/first_notifier/schema_alias";
 
 export default function SchoolManagementTable() {
     const { data: schools } = useQuery(getAllSchoolsOptions())

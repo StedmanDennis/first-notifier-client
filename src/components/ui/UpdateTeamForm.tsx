@@ -3,12 +3,13 @@
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel } from "./form";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getAllSchoolsOptions, updateTeamOptions } from "@/lib/api";
+import { getAllSchoolsOptions, updateTeamOptions } from "@/lib/api/first_notifier/react_query_options";
 import { Input } from "./input";
 import { Select, SelectItem, SelectTrigger, SelectValue, SelectContent } from "./select";
 import { Button } from "./button";
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { Team } from "@/lib/api/first_notifier/schema_alias";
 
 const updateFormSchema = z.object({
     name: z.string(),
@@ -43,6 +44,8 @@ export default function UpdateTeamForm({ team, submitSuccessAction }: Props) {
     //use parse so coersion of schema applies
     const currentValues = updateFormSchema.parse(updateTeamForm.watch())
 
+    //TODO: this only works because the keys are the same between UpdateTeamForm and Team
+    //change logic to by more type safe
     let shouldUpdate = Object.entries(currentValues).some(([key, value]) => team[key as keyof UpdateTeamForm] !== value)
 
     return (

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useMemo, JSX } from 'react';
 import * as d3 from 'd3';
+import { Team, TeamPosition } from '@/lib/api/first_notifier/schema_alias';
 
 interface TeamFloorPlanProps {
     teams: Team[];
@@ -12,10 +13,7 @@ interface TeamFloorPlanProps {
     gridSize?: number;
 }
 
-interface TeamWithPosition extends Team {
-    x: number;
-    y: number;
-}
+type TeamWithPosition = Team & Omit<TeamPosition, 'teamNumber'>
 
 export default function TeamFloorPlan({
     teams,

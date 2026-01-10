@@ -1,4 +1,4 @@
-import { getAllTeamsOptions, removeTeamOptions, updateTeamOptions } from "@/lib/api";
+import { getAllTeamPositionsOptions, getAllTeamsOptions, removeTeamOptions, updateTeamOptions } from "@/lib/api/first_notifier/react_query_options";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useState, useEffect } from "react";
@@ -8,27 +8,29 @@ import UpdateTeamDialog from "./UpdateTeamDialog";
 import { Button } from "./button";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader } from "./dialog";
 import TeamFloorPlan from "./TeamFloorPlan";
+import { Team } from "@/lib/api/first_notifier/schema_alias";
 
 export default function TeamManagementTable() {
     const { data: teams } = useQuery(getAllTeamsOptions())
+    const { data: positions } = useQuery(getAllTeamPositionsOptions())
     const removeTeamMutation = useMutation(removeTeamOptions())
 
     // Position state management (moved from page.tsx)
-    const [positions, setPositions] = useState<TeamPosition[]>([])
+    const [clientPositions, setClientPositions] = useState(positions ?? [])
 
-    useEffect(() => {
-        if (teams && positions.length === 0) {
-            const initialPositions = teams.map((team, index) => ({
-                teamNumber: team.teamNumber,
-                x: 20 + (index % 7) * 60,
-                y: 20 + Math.floor(index / 7) * 60
-            }))
-            setPositions(initialPositions)
-        }
-    }, [teams, positions.length])
+    // useEffect(() => {
+    //     if (teams && positions.length === 0) {
+    //         const initialPositions = teams.map((team, index) => ({
+    //             teamNumber: team.teamNumber,
+    //             x: 20 + (index % 7) * 60,
+    //             y: 20 + Math.floor(index / 7) * 60
+    //         }))
+    //         setClientPositions(initialPositions)
+    //     }
+    // }, [teams, positions.length])
 
     const handlePositionChange = (teamNumber: string, x: number, y: number) => {
-        setPositions(prev => {
+        setClientPositions(prev => {
             const existing = prev.find(p => p.teamNumber === teamNumber)
             if (existing) {
                 return prev.map(p => p.teamNumber === teamNumber ? { ...p, x, y } : p)
@@ -101,7 +103,7 @@ export default function TeamManagementTable() {
                             {teams ? (
                                 <TeamFloorPlan
                                     teams={teams}
-                                    positions={positions}
+                                    positions={clientPositions}
                                     onPositionChange={handlePositionChange}
                                     width={400}
                                     height={400}

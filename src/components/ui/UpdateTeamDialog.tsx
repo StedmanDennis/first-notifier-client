@@ -2,6 +2,7 @@
 import { ReactElement, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./dialog";
 import UpdateTeamForm from "./UpdateTeamForm";
+import { Team } from "@/lib/api/first_notifier/schema_alias";
 
 
 export default function UpdateTeamDialog({ triggerElement, team }: { triggerElement: ReactElement, team: Team }) {
