@@ -1,37 +1,37 @@
 'use client';
 
-import React, { useEffect, useRef, useMemo, JSX } from 'react';
+import React, { useEffect, useRef, useMemo, JSX, useState } from 'react';
 import * as d3 from 'd3';
 import { Team, TeamPosition } from '@/lib/api/first_notifier/schema_alias';
-
-interface TeamFloorPlanProps {
-    teams: Team[];
-    positions: TeamPosition[];
-    onPositionChange?: (teamNumber: string, x: number, y: number) => void;
-    width?: number;
-    height?: number;
-    gridSize?: number;
-}
+import { useQuery } from '@tanstack/react-query';
+import { getAllTeamPositionsOptions, getAllTeamsOptions } from '@/lib/api/first_notifier/react_query_options';
 
 type TeamWithPosition = Team & Omit<TeamPosition, 'teamNumber'>
+type FloorPlanData = Record<string, TeamWithPosition>
 
-export default function TeamFloorPlan({
-    teams,
-    positions,
-    onPositionChange,
-    width = 400,
-    height = 400,
-    gridSize = 20
-}: TeamFloorPlanProps) {
-    const svgRef = useRef<SVGSVGElement>(null);
+export default function TeamFloorPlan() {
+    const { data: teams } = useQuery(getAllTeamsOptions())
+    const { data: positions } = useQuery(getAllTeamPositionsOptions())
+    const [floorPlanPositions, setFloorPlanPositions] = useState<FloorPlanData>({})
+    const svgRef = useRef<SVGSVGElement>(null)
+    const width = 400;
+    const height = 400;
+    const gridSize = 20;
 
-    // Merge teams with their positions
-    const teamsWithPositions = useMemo<TeamWithPosition[]>(() => {
-        return teams.map(team => {
-            const pos = positions.find(p => p.teamNumber === team.teamNumber) || { x: 50, y: 50 };
-            return { ...team, ...pos };
-        });
-    }, [teams, positions]);
+    // Update floor plan positions when data loads
+    useEffect(() => {
+        if (!teams || !positions) return
+
+        const newPositions = positions.reduce((acc, pos) => {
+            //safe to assume a team that has a position exists in the team array
+            //because the a team must exist to have a position
+            const team = teams.find(t => t.teamNumber === pos.teamNumber)!
+            acc[pos.teamNumber] = { ...team, x: pos.x, y: pos.y }
+            return acc
+        }, {} as FloorPlanData)
+
+        setFloorPlanPositions(newPositions)
+    }, [teams, positions])
 
     // Generate grid lines
     const gridLines = useMemo(() => {
@@ -72,7 +72,7 @@ export default function TeamFloorPlan({
 
     // Setup D3 drag behavior
     useEffect(() => {
-        const drag = d3.drag<SVGGElement, TeamWithPosition>()
+        const drag = d3.drag<SVGGElement, [string, TeamWithPosition]>()
             .on('drag', function (event, d) {
                 // Grid snap
                 let newX = Math.round(event.x / gridSize) * gridSize;
@@ -84,20 +84,16 @@ export default function TeamFloorPlan({
 
                 // Update transform
                 d3.select(this).attr('transform', `translate(${newX},${newY})`);
-
-                if (onPositionChange) {
-                    onPositionChange(d.teamNumber, newX, newY);
-                }
             });
 
         // Apply drag behavior to React-rendered team markers
         if (svgRef.current) {
             d3.select(svgRef.current)
-                .selectAll<SVGGElement, TeamWithPosition>('.team-marker')
-                .data(teamsWithPositions)
+                .selectAll<SVGGElement, [string, TeamWithPosition]>('.team-marker')
+                .data(Object.entries(floorPlanPositions))
                 .call(drag);
         }
-    }, [teamsWithPositions, gridSize, width, height, onPositionChange]);
+    }, [floorPlanPositions, gridSize, width, height]);
 
     return (
         <div className="border rounded bg-white shadow-sm overflow-hidden">
@@ -114,14 +110,14 @@ export default function TeamFloorPlan({
 
                 {/* Teams */}
                 <g className="teams">
-                    {teamsWithPositions.map(team => (
+                    {Object.entries(floorPlanPositions).map(([teamNumber, data]) => (
                         <g
-                            key={team.teamNumber}
+                            key={teamNumber}
                             className="team-marker"
-                            transform={`translate(${team.x},${team.y})`}
+                            transform={`translate(${data.x},${data.y})`}
                             style={{ cursor: 'grab' }}
                         >
-                            <title>{`${team.name} (${team.teamNumber})`}</title>
+                            <title>{`${data.name} (${teamNumber})`}</title>
                             <circle
                                 r={15}
                                 fill="#3b82f6"
@@ -136,7 +132,7 @@ export default function TeamFloorPlan({
                                 fontWeight="bold"
                                 pointerEvents="none"
                             >
-                                {team.teamNumber}
+                                {teamNumber}
                             </text>
                         </g>
                     ))}
