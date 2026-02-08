@@ -1,13 +1,10 @@
-import { getAllTeamPositionsOptions, getAllTeamsOptions, removeTeamOptions, updateTeamOptions } from "@/lib/api/first_notifier/react_query_options";
+import { getAllTeamsOptions, removeTeamOptions } from "@/lib/api/first_notifier/react_query_options";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useState, useEffect } from "react";
 import ResourceTableActionColumn from "./ResourceTableActionColumn";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
 import UpdateTeamDialog from "./UpdateTeamDialog";
 import { Button } from "./button";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader } from "./dialog";
-import TeamFloorPlan from "./TeamFloorPlan";
 import { Team } from "@/lib/api/first_notifier/schema_alias";
 import TeamFloorPlanUpdateDialog from "./TeamFloorPlanUpdateDialog";
 

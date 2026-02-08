@@ -5,6 +5,7 @@ import * as d3 from 'd3';
 import { Team, TeamPosition } from '@/lib/api/first_notifier/schema_alias';
 import { useQuery } from '@tanstack/react-query';
 import { getAllTeamPositionsOptions, getAllTeamsOptions } from '@/lib/api/first_notifier/react_query_options';
+import { Button } from './button';
 
 type TeamWithPosition = Team & Omit<TeamPosition, 'teamNumber'>
 type FloorPlanData = Record<string, TeamWithPosition>
@@ -13,10 +14,13 @@ export default function TeamFloorPlan() {
     const { data: teams } = useQuery(getAllTeamsOptions())
     const { data: positions } = useQuery(getAllTeamPositionsOptions())
     const [floorPlanPositions, setFloorPlanPositions] = useState<FloorPlanData>({})
+
     const svgRef = useRef<SVGSVGElement>(null)
     const width = 400;
     const height = 400;
     const gridSize = 20;
+
+    let originalPositions: FloorPlanData = {}
 
     // Update floor plan positions when data loads
     useEffect(() => {
@@ -30,8 +34,15 @@ export default function TeamFloorPlan() {
             return acc
         }, {} as FloorPlanData)
 
+        originalPositions = newPositions
         setFloorPlanPositions(newPositions)
     }, [teams, positions])
+
+    const hasChanges = () => {
+        const hasAddedOrRemoved = positions?.length != Object.keys(floorPlanPositions).length
+        const hasChangedPosition = Object.entries(floorPlanPositions).some(([_, { teamNumber }]) => !(originalPositions[teamNumber]?.x == floorPlanPositions[teamNumber]?.x && originalPositions[teamNumber]?.y == floorPlanPositions[teamNumber]?.y))
+        return hasAddedOrRemoved || hasChangedPosition
+    }
 
     // Generate grid lines
     const gridLines = useMemo(() => {
@@ -93,10 +104,14 @@ export default function TeamFloorPlan() {
                 .data(Object.entries(floorPlanPositions))
                 .call(drag);
         }
+
+        return () => {
+            d3.select(svgRef.current).selectAll('.team-marker').on('drag', null);
+        }
     }, [floorPlanPositions, gridSize, width, height]);
 
     return (
-        <div className="border rounded bg-white shadow-sm overflow-hidden">
+        <div className="flex justify-center">
             <svg
                 width={width}
                 height={height}
@@ -138,6 +153,7 @@ export default function TeamFloorPlan() {
                     ))}
                 </g>
             </svg>
+            <Button disabled={!hasChanges()} onClick={() => { }}>Save</Button>
         </div>
     );
 }

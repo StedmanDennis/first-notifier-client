@@ -8,13 +8,11 @@ export default function TeamFloorPlanUpdateDialog() {
             <DialogTrigger asChild>
                 <Button>Floor Plan</Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[900px]">
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle className="flex justify-center py-4">Team Floor Plan</DialogTitle>
                 </DialogHeader>
-                <div className="flex justify-center py-4">
-                    <TeamFloorPlan />
-                </div>
+                <TeamFloorPlan />
             </DialogContent>
         </Dialog>
     )
