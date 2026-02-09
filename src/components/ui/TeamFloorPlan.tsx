@@ -84,7 +84,7 @@ export default function TeamFloorPlan() {
     // Setup D3 drag behavior
     useEffect(() => {
         const drag = d3.drag<SVGGElement, [string, TeamWithPosition]>()
-            .on('drag', function (event, d) {
+            .on('drag', function (event, [teamNumber, data]) {
                 // Grid snap
                 let newX = Math.round(event.x / gridSize) * gridSize;
                 let newY = Math.round(event.y / gridSize) * gridSize;
@@ -94,7 +94,11 @@ export default function TeamFloorPlan() {
                 newY = Math.max(0, Math.min(height, newY));
 
                 // Update transform
-                d3.select(this).attr('transform', `translate(${newX},${newY})`);
+                //prevent transforms that did not result in a snap to a new position from causing a rerender
+                if (newX != data.x || newY != data.y) {
+                    d3.select(this).attr('transform', `translate(${newX},${newY})`);
+                    setFloorPlanPositions({ ...floorPlanPositions, [teamNumber]: { ...data, x: newX, y: newY } })
+                }
             });
 
         // Apply drag behavior to React-rendered team markers
