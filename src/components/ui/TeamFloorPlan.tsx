@@ -14,13 +14,12 @@ export default function TeamFloorPlan() {
     const { data: teams } = useQuery(getAllTeamsOptions())
     const { data: positions } = useQuery(getAllTeamPositionsOptions())
     const [floorPlanPositions, setFloorPlanPositions] = useState<FloorPlanData>({})
+    const [originalPositions, setOriginalPositions] = useState<FloorPlanData>({})
 
     const svgRef = useRef<SVGSVGElement>(null)
     const width = 400;
     const height = 400;
     const gridSize = 20;
-
-    let originalPositions: FloorPlanData = {}
 
     // Update floor plan positions when data loads
     useEffect(() => {
@@ -34,13 +33,14 @@ export default function TeamFloorPlan() {
             return acc
         }, {} as FloorPlanData)
 
-        originalPositions = newPositions
+        setOriginalPositions(newPositions)
         setFloorPlanPositions(newPositions)
     }, [teams, positions])
 
     const hasChanges = () => {
-        const hasAddedOrRemoved = positions?.length != Object.keys(floorPlanPositions).length
-        const hasChangedPosition = Object.entries(floorPlanPositions).some(([_, { teamNumber }]) => !(originalPositions[teamNumber]?.x == floorPlanPositions[teamNumber]?.x && originalPositions[teamNumber]?.y == floorPlanPositions[teamNumber]?.y))
+        const originalTeams = Object.values(originalPositions)
+        const hasAddedOrRemoved = originalTeams.length != Object.keys(floorPlanPositions).length
+        const hasChangedPosition = originalTeams.some(({ teamNumber, x, y }) => !(floorPlanPositions[teamNumber]?.x == x && floorPlanPositions[teamNumber]?.y == y))
         return hasAddedOrRemoved || hasChangedPosition
     }
 
@@ -157,7 +157,7 @@ export default function TeamFloorPlan() {
                     ))}
                 </g>
             </svg>
-            <Button disabled={!hasChanges()} onClick={() => { }}>Save</Button>
+            <Button disabled={!hasChanges()} onClick={() => { console.log(!hasChanges()) }}>Save</Button>
         </div>
     );
 }
