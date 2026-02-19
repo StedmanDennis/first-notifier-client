@@ -3,8 +3,8 @@
 import React, { useEffect, useRef, useMemo, JSX, useState } from 'react';
 import * as d3 from 'd3';
 import { Team, TeamPosition } from '@/lib/api/first_notifier/schema_alias';
-import { useQuery } from '@tanstack/react-query';
-import { getAllTeamPositionsOptions, getAllTeamsOptions } from '@/lib/api/first_notifier/react_query_options';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getAllTeamPositionsOptions, getAllTeamsOptions, updateTeamPositionsOptions } from '@/lib/api/first_notifier/react_query_options';
 import { Button } from './button';
 
 type TeamWithPosition = Team & Omit<TeamPosition, 'teamNumber'>
@@ -13,6 +13,7 @@ type FloorPlanData = Record<string, TeamWithPosition>
 export default function TeamFloorPlan() {
     const { data: teams } = useQuery(getAllTeamsOptions())
     const { data: positions } = useQuery(getAllTeamPositionsOptions())
+    const updateTeamPositionsMutation = useMutation(updateTeamPositionsOptions())
     const [floorPlanPositions, setFloorPlanPositions] = useState<FloorPlanData>({})
     const [originalPositions, setOriginalPositions] = useState<FloorPlanData>({})
 
@@ -157,7 +158,7 @@ export default function TeamFloorPlan() {
                     ))}
                 </g>
             </svg>
-            <Button disabled={!hasChanges()} onClick={() => { console.log(!hasChanges()) }}>Save</Button>
+            <Button disabled={!hasChanges()} onClick={() => updateTeamPositionsMutation.mutate({ updates: Object.entries(floorPlanPositions).map(([teamNumber, data]) => ({ teamNumber, x: data.x, y: data.y })) })}>Save</Button>
         </div>
     );
 }

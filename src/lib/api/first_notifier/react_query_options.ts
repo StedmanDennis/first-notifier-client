@@ -36,3 +36,10 @@ export function getAllTeamPositionsOptions() {
         queryFn: async () => (await first_notifier_client.GET('/api/event/team/positions')).data
     })
 }
+
+export function updateTeamPositionsOptions() {
+    return mutationOptions({
+        mutationKey: ['updateTeamPositions'],
+        mutationFn: async (body: components['schemas']['BatchUpdateTeamPositionsRequest']) => (await first_notifier_client.PATCH('/api/event/team/positions/update', { body })).data
+    })
+}
